@@ -118,6 +118,7 @@ array_next(Bin,                Values, Nexts, Buf, Opts) -> ?ERROR(array_next, [
 -spec object(binary(), [next()], binary(), decode_opt()) -> decode_result().
 object(<<$}, Bin/binary>>, Nexts, Buf, ?DECODE_OPT{format=eep18}=Opts)    -> next(Bin, {[]}, Nexts, Buf, Opts);
 object(<<$}, Bin/binary>>, Nexts, Buf, ?DECODE_OPT{format=proplist}=Opts) -> next(Bin, [{}], Nexts, Buf, Opts);
+object(<<$}, Bin/binary>>, Nexts, Buf, ?DECODE_OPT{format=map}=Opts)      -> next(Bin, #{}, Nexts, Buf, Opts);
 object(<<Bin/binary>>, Nexts, Buf, Opts)                                  -> object_key(Bin, [], Nexts, Buf, Opts).
 
 -spec object_key(binary(), jsone:json_object_members(), [next()], binary(), decode_opt()) -> decode_result().
@@ -131,6 +132,7 @@ object_value(Bin,                Key, Members, Nexts, Buf, Opts) -> ?ERROR(objec
 -spec object_next(binary(), jsone:json_object_members(), [next()], binary(), decode_opt()) -> decode_result().
 object_next(<<$}, Bin/binary>>, Members, Nexts, Buf, ?DECODE_OPT{format=eep18}=Opts)    -> next(Bin, {Members}, Nexts, Buf, Opts);
 object_next(<<$}, Bin/binary>>, Members, Nexts, Buf, ?DECODE_OPT{format=proplist}=Opts) -> next(Bin, Members, Nexts, Buf, Opts);
+object_next(<<$}, Bin/binary>>, Members, Nexts, Buf, ?DECODE_OPT{format=map}=Opts)      -> next(Bin, maps:from_list(Members), Nexts, Buf, Opts);
 object_next(<<$,, Bin/binary>>, Members, Nexts, Buf, Opts)                              -> whitespace(Bin, {object_key, Members}, Nexts, Buf, Opts);
 object_next(Bin,                Members, Nexts, Buf, Opts)                              -> ?ERROR(object_next, [Bin, Members, Nexts, Buf, Opts]).
 
@@ -274,4 +276,6 @@ parse_option([], Opt) -> Opt;
 parse_option([{format, eep18}|T], Opt) ->
     parse_option(T, Opt?DECODE_OPT{format=eep18});
 parse_option([{format, proplist}|T], Opt) ->
-    parse_option(T, Opt?DECODE_OPT{format=proplist}).
+    parse_option(T, Opt?DECODE_OPT{format=proplist});
+parse_option([{format, map}|T], Opt) ->
+    parse_option(T, Opt?DECODE_OPT{format=map}).

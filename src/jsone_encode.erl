@@ -85,17 +85,18 @@ next([Next | Nexts], Buf, Opt) ->
     end.
 
 -spec value(jsone:json_value(), [next()], binary(), encode_opt()) -> encode_result().
-value(null, Nexts, Buf, Opt)                                            -> next(Nexts, <<Buf/binary, "null">>, Opt);
-value(false, Nexts, Buf, Opt)                                           -> next(Nexts, <<Buf/binary, "false">>, Opt);
-value(true, Nexts, Buf, Opt)                                            -> next(Nexts, <<Buf/binary, "true">>, Opt);
-value(Value, Nexts, Buf, Opt) when is_integer(Value)                    -> next(Nexts, <<Buf/binary, (integer_to_binary(Value))/binary>>, Opt);
-value(Value, Nexts, Buf, Opt) when is_float(Value)                      -> next(Nexts, <<Buf/binary, (float_to_binary(Value))/binary>>, Opt);
-value(Value, Nexts, Buf, Opt) when is_binary(Value)                     -> string(Value, Nexts, Buf, Opt);
-value({_} = Value, Nexts, Buf, ?ENCODE_OPT{format=eep18}=Opt)           -> object(Value, Nexts, Buf, Opt);
-value([{}] = Value,  Nexts, Buf, ?ENCODE_OPT{format=proplist}=Opt)      -> object(Value, Nexts, Buf, Opt);
-value([{_, _}|_] = Value, Nexts, Buf, ?ENCODE_OPT{format=proplist}=Opt) -> object(Value, Nexts, Buf, Opt);
-value(Value, Nexts, Buf, Opt) when is_list(Value)                       -> array(Value, Nexts, Buf, Opt);
-value(Value, Nexts, Buf, _)                                             -> ?ERROR(value, [Value, Nexts, Buf]).
+value(null, Nexts, Buf, Opt)                                             -> next(Nexts, <<Buf/binary, "null">>, Opt);
+value(false, Nexts, Buf, Opt)                                            -> next(Nexts, <<Buf/binary, "false">>, Opt);
+value(true, Nexts, Buf, Opt)                                             -> next(Nexts, <<Buf/binary, "true">>, Opt);
+value(Value, Nexts, Buf, Opt) when is_integer(Value)                     -> next(Nexts, <<Buf/binary, (integer_to_binary(Value))/binary>>, Opt);
+value(Value, Nexts, Buf, Opt) when is_float(Value)                       -> next(Nexts, <<Buf/binary, (float_to_binary(Value))/binary>>, Opt);
+value(Value, Nexts, Buf, Opt) when is_binary(Value)                      -> string(Value, Nexts, Buf, Opt);
+value({_} = Value, Nexts, Buf, ?ENCODE_OPT{format=eep18}=Opt)            -> object(Value, Nexts, Buf, Opt);
+value([{}] = Value,  Nexts, Buf, ?ENCODE_OPT{format=proplist}=Opt)       -> object(Value, Nexts, Buf, Opt);
+value([{_, _}|_] = Value, Nexts, Buf, ?ENCODE_OPT{format=proplist}=Opt)  -> object(Value, Nexts, Buf, Opt);
+value(Value, Nexts, Buf, ?ENCODE_OPT{format=map}=Opt) when is_map(Value) -> object(Value, Nexts, Buf, Opt);
+value(Value, Nexts, Buf, Opt) when is_list(Value)                        -> array(Value, Nexts, Buf, Opt);
+value(Value, Nexts, Buf, _)                                              -> ?ERROR(value, [Value, Nexts, Buf]).
 
 -spec string(jsone:json_string(), [next()], binary(), encode_opt()) -> encode_result().
 string(<<Str/binary>>, Nexts, Buf, Opt) ->
@@ -164,7 +165,9 @@ object({Members}, Nexts, Buf, ?ENCODE_OPT{format=eep18}=Opt) ->
 object([{}], Nexts, Buf, ?ENCODE_OPT{format=proplist}=Opt) ->
     next(Nexts, <<Buf/binary, ${, $}>>, Opt);
 object(Members, Nexts, Buf, ?ENCODE_OPT{format=proplist}=Opt) ->
-    object_members(Members, Nexts, <<Buf/binary, ${>>, Opt).
+    object_members(Members, Nexts, <<Buf/binary, ${>>, Opt);
+object(Map, Nexts, Buf, ?ENCODE_OPT{format=map}=Opt) ->
+    object_members(maps:to_list(Map), Nexts, <<Buf/binary, ${>>, Opt).
 
 -spec object_members(jsone:json_object_members(), [next()], binary(), encode_opt()) -> encode_result().
 object_members([],                             Nexts, Buf, Opt) -> next(Nexts, <<Buf/binary, $}>>, Opt);
@@ -185,5 +188,7 @@ parse_option([{format, eep18}|T], Opt) ->
     parse_option(T, Opt?ENCODE_OPT{format=eep18});
 parse_option([{format, proplist}|T], Opt) ->
     parse_option(T, Opt?ENCODE_OPT{format=proplist});
+parse_option([{format, map}|T], Opt) ->
+    parse_option(T, Opt?ENCODE_OPT{format=map});
 parse_option([native_utf8|T], Opt) ->
     parse_option(T, Opt?ENCODE_OPT{native_utf8=true}).

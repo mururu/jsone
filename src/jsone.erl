@@ -57,13 +57,14 @@
 -type json_number()          :: number().
 -type json_string()          :: binary().
 -type json_array()           :: [json_value()].
--type json_object()          :: json_object_eep18() | json_object_proplist().
+-type json_object()          :: json_object_eep18() | json_object_proplist() | json_object_map().
 -type json_object_eep18()    :: {json_object_members()}.
 -type json_object_proplist() :: json_object_members() | [{}].
+-type json_object_map()      :: map().
 -type json_object_members()  :: [{json_string(), json_value()}].
 
--type decode_option() :: {format, eep18 | proplist}.
--type encode_option() :: {format, eep18 | proplist} | native_utf8.
+-type decode_option() :: {format, eep18 | proplist | map}.
+-type encode_option() :: {format, eep18 | proplist | map} | native_utf8.
 %% native_utf8: Encodes UTF-8 characters as a human-readable(non-escaped) string
 
 -define(DEFAULT_DECODE_OPTIONS, []).

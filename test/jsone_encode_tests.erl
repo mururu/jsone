@@ -155,6 +155,26 @@ encode_test_() ->
               ?assertMatch({error, {badarg, _}}, jsone_encode:encode({[{true, 2}]}, [{format, proplist}]))
       end},
 
+     %% Objects (map)
+     {"simple object",
+      fun () ->
+              Input    = #{<<"key">> => <<"value">>, <<"1">> => 2},
+              Expected = <<"{\"1\":2,\"key\":\"value\"}">>,
+              ?assertEqual({ok, Expected}, jsone_encode:encode(Input, [{format, map}]))
+      end},
+     {"empty object",
+      fun () ->
+              Input    = #{},
+              Expected = <<"{}">>,
+              ?assertEqual({ok, Expected}, jsone_encode:encode(Input, [{format, map}]))
+      end},
+     {"non binary object member key is disallowed",
+      fun () ->
+              ?assertMatch({error, {badarg, _}}, jsone_encode:encode(#{1 => 2}, [{format, map}])),
+              ?assertMatch({error, {badarg, _}}, jsone_encode:encode(#{"1" => 2}, [{format, map}])),
+              ?assertMatch({error, {badarg, _}}, jsone_encode:encode(#{true => 2}, [{format, map}]))
+      end},
+
      %% Others
      {"compound data",
       fun () ->
