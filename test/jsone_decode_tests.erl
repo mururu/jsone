@@ -158,7 +158,7 @@ decode_test_() ->
               ?assertMatch({error, {badarg, _}}, jsone_decode:decode(Input))
       end},
 
-     %% Objects
+     %% Objects (default)
      {"simple object",
       fun () ->
               Input    = <<"{\"1\":2,\"key\":\"value\"}">>,
@@ -206,6 +206,106 @@ decode_test_() ->
       fun () ->
               Input = <<"{\"1\":2 \"key\":\"value\"">>,
               ?assertMatch({error, {badarg, _}}, jsone_decode:decode(Input))
+      end},
+
+     %% Objects (eep18)
+     {"simple object",
+      fun () ->
+              Input    = <<"{\"1\":2,\"key\":\"value\"}">>,
+              Expected = {[{<<"key">>, <<"value">>}, {<<"1">>, 2}]},
+              ?assertEqual({ok, Expected, <<"">>}, jsone_decode:decode(Input, [{format, eep18}]))
+      end},
+     {"object: contains whitespaces",
+      fun () ->
+              Input    = <<"{  \"1\" :\t 2,\n\r\"key\" :   \n  \"value\"}">>,
+              Expected = {[{<<"key">>, <<"value">>}, {<<"1">>, 2}]},
+              ?assertEqual({ok, Expected, <<"">>}, jsone_decode:decode(Input, [{format, eep18}]))
+      end},
+     {"empty object",
+      fun () ->
+              ?assertEqual({ok, {[]}, <<"">>}, jsone_decode:decode(<<"{}">>, [{format, eep18}])),
+              ?assertEqual({ok, {[]}, <<"">>}, jsone_decode:decode(<<"{ \t\r\n}">>, [{format, eep18}]))
+      end},
+     {"object: trailing comma is disallowed",
+      fun () ->
+              Input = <<"{\"1\":2, \"key\":\"value\", }">>,
+              io:format("~p\n", [catch jsone_decode:decode(Input, [{format, eep18}])]),
+              ?assertMatch({error, {badarg, _}}, jsone_decode:decode(Input, [{format, eep18}]))
+      end},
+     {"object: missing comma",
+      fun () ->
+              Input = <<"{\"1\":2 \"key\":\"value\"}">>,
+              ?assertMatch({error, {badarg, _}}, jsone_decode:decode(Input, [{format, eep18}]))
+      end},
+     {"object: missing field key",
+      fun () ->
+              Input = <<"{:2, \"key\":\"value\"}">>,
+              ?assertMatch({error, {badarg, _}}, jsone_decode:decode(Input, [{format, eep18}]))
+      end},
+     {"object: non string key",
+      fun () ->
+              Input = <<"{1:2, \"key\":\"value\"}">>,
+              ?assertMatch({error, {badarg, _}}, jsone_decode:decode(Input, [{format, eep18}]))
+      end},
+     {"object: missing field value",
+      fun () ->
+              Input = <<"{\"1\", \"key\":\"value\"}">>,
+              ?assertMatch({error, {badarg, _}}, jsone_decode:decode(Input, [{format, eep18}]))
+      end},
+     {"object: missing closing brace",
+      fun () ->
+              Input = <<"{\"1\":2 \"key\":\"value\"">>,
+              ?assertMatch({error, {badarg, _}}, jsone_decode:decode(Input, [{format, eep18}]))
+      end},
+
+     %% Objects (proplist)
+     {"simple object",
+      fun () ->
+              Input    = <<"{\"1\":2,\"key\":\"value\"}">>,
+              Expected = [{<<"key">>, <<"value">>}, {<<"1">>, 2}],
+              ?assertEqual({ok, Expected, <<"">>}, jsone_decode:decode(Input, [{format, proplist}]))
+      end},
+     {"object: contains whitespaces",
+      fun () ->
+              Input    = <<"{  \"1\" :\t 2,\n\r\"key\" :   \n  \"value\"}">>,
+              Expected = [{<<"key">>, <<"value">>}, {<<"1">>, 2}],
+              ?assertEqual({ok, Expected, <<"">>}, jsone_decode:decode(Input, [{format, proplist}]))
+      end},
+     {"empty object",
+      fun () ->
+              ?assertEqual({ok, [{}], <<"">>}, jsone_decode:decode(<<"{}">>, [{format, proplist}])),
+              ?assertEqual({ok, [{}], <<"">>}, jsone_decode:decode(<<"{ \t\r\n}">>, [{format, proplist}]))
+      end},
+     {"object: trailing comma is disallowed",
+      fun () ->
+              Input = <<"{\"1\":2, \"key\":\"value\", }">>,
+              io:format("~p\n", [catch jsone_decode:decode(Input, [{format, proplist}])]),
+              ?assertMatch({error, {badarg, _}}, jsone_decode:decode(Input, [{format, proplist}]))
+      end},
+     {"object: missing comma",
+      fun () ->
+              Input = <<"{\"1\":2 \"key\":\"value\"}">>,
+              ?assertMatch({error, {badarg, _}}, jsone_decode:decode(Input, [{format, proplist}]))
+      end},
+     {"object: missing field key",
+      fun () ->
+              Input = <<"{:2, \"key\":\"value\"}">>,
+              ?assertMatch({error, {badarg, _}}, jsone_decode:decode(Input, [{format, proplist}]))
+      end},
+     {"object: non string key",
+      fun () ->
+              Input = <<"{1:2, \"key\":\"value\"}">>,
+              ?assertMatch({error, {badarg, _}}, jsone_decode:decode(Input, [{format, proplist}]))
+      end},
+     {"object: missing field value",
+      fun () ->
+              Input = <<"{\"1\", \"key\":\"value\"}">>,
+              ?assertMatch({error, {badarg, _}}, jsone_decode:decode(Input, [{format, proplist}]))
+      end},
+     {"object: missing closing brace",
+      fun () ->
+              Input = <<"{\"1\":2 \"key\":\"value\"">>,
+              ?assertMatch({error, {badarg, _}}, jsone_decode:decode(Input, [{format, proplist}]))
       end},
 
      %% Others

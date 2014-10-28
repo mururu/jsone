@@ -95,7 +95,7 @@ encode_test_() ->
               ?assertEqual({ok, Expected}, jsone_encode:encode(Input))
       end},
 
-     %% Objects
+     %% Objects (default)
      {"simple object",
       fun () ->
               Input    = {[{<<"key">>, <<"value">>}, {<<"1">>, 2}]},
@@ -113,6 +113,46 @@ encode_test_() ->
               ?assertMatch({error, {badarg, _}}, jsone_encode:encode({[{1, 2}]})),
               ?assertMatch({error, {badarg, _}}, jsone_encode:encode({[{"1", 2}]})),
               ?assertMatch({error, {badarg, _}}, jsone_encode:encode({[{true, 2}]}))
+      end},
+
+     %% Objects (eep18)
+     {"simple object",
+      fun () ->
+              Input    = {[{<<"key">>, <<"value">>}, {<<"1">>, 2}]},
+              Expected = <<"{\"key\":\"value\",\"1\":2}">>,
+              ?assertEqual({ok, Expected}, jsone_encode:encode(Input, [{format, eep18}]))
+      end},
+     {"empty object",
+      fun () ->
+              Input    = {[]},
+              Expected = <<"{}">>,
+              ?assertEqual({ok, Expected}, jsone_encode:encode(Input, [{format, eep18}]))
+      end},
+     {"non binary object member key is disallowed",
+      fun () ->
+              ?assertMatch({error, {badarg, _}}, jsone_encode:encode({[{1, 2}]}, [{format, eep18}])),
+              ?assertMatch({error, {badarg, _}}, jsone_encode:encode({[{"1", 2}]}, [{format, eep18}])),
+              ?assertMatch({error, {badarg, _}}, jsone_encode:encode({[{true, 2}]}, [{format, eep18}]))
+      end},
+
+     %% Objects (proplist)
+     {"simple object",
+      fun () ->
+              Input    = [{<<"key">>, <<"value">>}, {<<"1">>, 2}],
+              Expected = <<"{\"key\":\"value\",\"1\":2}">>,
+              ?assertEqual({ok, Expected}, jsone_encode:encode(Input, [{format, proplist}]))
+      end},
+     {"empty object",
+      fun () ->
+              Input    = [{}],
+              Expected = <<"{}">>,
+              ?assertEqual({ok, Expected}, jsone_encode:encode(Input, [{format, proplist}]))
+      end},
+     {"non binary object member key is disallowed",
+      fun () ->
+              ?assertMatch({error, {badarg, _}}, jsone_encode:encode({[{1, 2}]}, [{format, proplist}])),
+              ?assertMatch({error, {badarg, _}}, jsone_encode:encode({[{"1", 2}]}, [{format, proplist}])),
+              ?assertMatch({error, {badarg, _}}, jsone_encode:encode({[{true, 2}]}, [{format, proplist}]))
       end},
 
      %% Others
